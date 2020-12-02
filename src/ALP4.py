@@ -483,6 +483,17 @@ class ALP4(object):
         self._lastDDRseq = SequenceId
         return SequenceId
 
+    def _cast_imgData(self, imgData):
+        if isinstance(imgData, np.ndarray):
+            if imgData.dtype == np.bool:
+                imgData = np.left_shift(imgData.astype(np.uint8), 7)
+            else:
+                imgData = imgData.astype(np.uint8)
+        else:
+            raise ValueError("imgData must be an numpy ndarray.")
+        return imgData
+
+
     def SeqPutEx(self, imgData, LineOffset, LineLoad, SequenceId=None, PicOffset=0, PicLoad=0, dataFormat='Python'):
         """
         Image data transfer using AlpSeqPut is based on whole DMD frames. Applications that only
@@ -505,7 +516,7 @@ class ALP4(object):
         PARAMETERS
         ----------
 
-        imgData : list, 1D array or 1D ndarray
+        imgData : numpy.ndarray
                   Data stream corresponding to a sequence of nSizeX by nSizeX images.
                   Values has to be between 0 and 255.
         LineOffset : int
@@ -529,11 +540,6 @@ class ALP4(object):
                  Depends on ALP_DATA_FORMAT.
                  PicLoad = 0 correspond to a complete sequence.
                  By default, PicLoad = 0.
-        dataFormat : string, optional
-                 Specify the type of data sent as image.
-                 Should be ' Python' or 'C'.
-                 If the data is of Python format, it is converted into a C array before sending to the DMD via the dll.
-                 By default dataFormat = 'Python'
         """
 
         if not SequenceId:
@@ -548,10 +554,8 @@ class ALP4(object):
         if dataFormat not in ['Python', 'C']:
             raise ValueError('dataFormat must be one of "Python" or "C"')
 
-        if dataFormat == 'Python':
-            pImageData = imgData.astype(np.uint8).ctypes.data_as(ct.c_void_p)
-        elif dataFormat == 'C':
-            pImageData = ct.cast(imgData, ct.c_void_p)
+        imgData = self._cast_imgData(imgData)
+        pImageData = imgData.ctypes.data_as(ct.c_void_p)
 
         self._checkError(self._ALPLib.AlpSeqPutEx(self.ALP_ID, SequenceId, LinePutParam, pImageData),
                          'Cannot send image sequence to device.')
@@ -576,7 +580,7 @@ class ALP4(object):
         PARAMETERS
         ----------
 
-        imgData : list, 1D array or 1D ndarray
+        imgData : numpy.ndarray
                   Data stream corresponding to a sequence of nSizeX by nSizeX images.
                   Values has to be between 0 and 255.
         SequenceId : ctypes c_long
@@ -590,11 +594,6 @@ class ALP4(object):
                  Depends on ALP_DATA_FORMAT.
                  PicLoad = 0 correspond to a complete sequence.
                  By default, PicLoad = 0.
-        dataFormat : string, optional
-                 Specify the type of data sent as image.
-                 Should be ' Python' or 'C'.
-                 If the data is of Python format, it is converted into a C array before sending to the DMD via the dll.
-                 By default dataFormat = 'Python'
 
         SEE ALSO
         --------
@@ -605,12 +604,9 @@ class ALP4(object):
         if not SequenceId:
             SequenceId = self._lastDDRseq
 
-        if dataFormat == 'Python':
-            pImageData = imgData.astype(np.uint8).ctypes.data_as(ct.c_void_p)
-        elif dataFormat == 'C':
-            pImageData = ct.cast(imgData, ct.c_void_p)
-        else:
-            raise ValueError('dataFormat must be one of "Python" or "C"')
+        imgData = self._cast_imgData(imgData)
+
+        pImageData = imgData.ctypes.data_as(ct.c_void_p)
 
         self._checkError(
             self._ALPLib.AlpSeqPut(self.ALP_ID, SequenceId, ct.c_long(PicOffset), ct.c_long(PicLoad), pImageData),
