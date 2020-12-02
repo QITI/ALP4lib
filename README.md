@@ -43,7 +43,7 @@ or
 easy_install ALP4lib
 ```
 
-### Installation from source (Github)
+### Installation from the source (Github)
 To install the latest version from Github, clone the repository, and install the package with the the following command.
 ```shell script
 python setup.py install

@@ -339,7 +339,8 @@ class ALP4(object):
     This class controls a Vialux DMD board based on the Vialux ALP 4.X API.
     """
 
-    def __init__(self, version='4.3', libDir=None):
+    def __init__(self, version='4.3', libDir=None, verbose=False):
+        self.verbose=verbose
 
         os_type = platform.system()
 
@@ -347,32 +348,33 @@ class ALP4(object):
             try:
                 reg = _winreg.ConnectRegistry(None, _winreg.HKEY_LOCAL_MACHINE)
                 key = _winreg.OpenKey(reg, r"SOFTWARE\ViALUX\ALP-" + version)
-                libDir = (_winreg.QueryValueEx(key, "Path"))[0] + "/ALP-{0} API/".format(version)
+                libPath = (_winreg.QueryValueEx(key, "Path"))[0] + "/ALP-{0} API/".format(version)
             except EnvironmentError:
                 raise ValueError("Cannot auto detect libDir! Please specify it manually.")
-
-        if libDir.endswith('/'):
+        elif libDir.endswith('/'):
             libPath = libDir
         else:
             libPath = libDir + '/'
-            ## Load the ALP dll
-        if (os_type == 'Windows'):
-            if (ct.sizeof(ct.c_voidp) == 8):  ## 64bit
+
+        if os_type == 'Windows':
+            if (ct.sizeof(ct.c_void_p) == 8):  ## 64bit
                 libPath += 'x64/'
-            elif not (ct.sizeof(ct.c_voidp) == 4):  ## 32bit
+            elif not (ct.sizeof(ct.c_void_p) == 4):  ## 32bit
                 raise OSError('System not supported.')
         else:
             raise OSError('System not supported.')
 
-        if (version == '4.1'):
+        if version == '4.1':
             libPath += 'alpD41.dll'
-        elif (version == '4.2'):
+        elif version == '4.2':
             libPath += 'alpD41.dll'
-        elif (version == '4.3'):
+        elif version == '4.3':
             libPath += 'alp4395.dll'
 
-        print('Loading library: ' + libPath)
+        if self.verbose:
+            print('Loading library: ' + libPath)
 
+        ## Load the ALP dll
         self._ALPLib = ct.CDLL(libPath)
 
         ## Class parameters
@@ -435,7 +437,8 @@ class ALP4(object):
             print("Unknown DMDtype with value ", self.DMDType.value)
             raise EnvironmentError("DMD Type not supported or unknown.")
 
-        print('DMD found, resolution = ' + str(self.nSizeX) + ' x ' + str(self.nSizeY) + '.')
+        if self.verbose:
+            print('DMD found, resolution = ' + str(self.nSizeX) + ' x ' + str(self.nSizeY) + '.')
 
     def SeqAlloc(self, nbImg=1, bitDepth=1):
         """
