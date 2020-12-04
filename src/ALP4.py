@@ -339,8 +339,9 @@ class ALP4(object):
     This class controls a Vialux DMD board based on the Vialux ALP 4.X API.
     """
 
-    def __init__(self, version='4.3', libDir=None, verbose=False):
-        self.verbose=verbose
+    def __init__(self, version='4.3', libDir=None, invert=False, verbose=False):
+        self.verbose = verbose
+        self.invert = invert
 
         os_type = platform.system()
 
@@ -427,6 +428,9 @@ class ALP4(object):
         if self.verbose:
             print('DMD found, resolution = ' + str(self.nSizeX) + ' x ' + str(self.nSizeY) + '.')
 
+        if self.invert:
+            self._checkError(self._ALPLib.AlpProjControl(self.ALP_ID, ALP_PROJ_INVERSION, ALP_DEFAULT+1), "Cannot set ALP_PROJ_INVERSION.")
+
     def SeqAlloc(self, nbImg=1, bitDepth=1):
         """
         This function provides ALP memory for a sequence of pictures. All pictures of a sequence have the
@@ -478,10 +482,11 @@ class ALP4(object):
                 imgData = imgData.astype(np.uint8)
         else:
             raise ValueError("imgData must be an numpy ndarray.")
+
         return imgData
 
 
-    def SeqPutEx(self, imgData, LineOffset, LineLoad, SequenceId=None, PicOffset=0, PicLoad=0, dataFormat='Python'):
+    def SeqPutEx(self, imgData, LineOffset, LineLoad, SequenceId=None, PicOffset=0, PicLoad=0):
         """
         Image data transfer using AlpSeqPut is based on whole DMD frames. Applications that only
         update small regions inside a frame suffer from overhead of this default behavior. An extended
@@ -537,9 +542,6 @@ class ALP4(object):
                                    ct.c_long(PicLoad),
                                    ct.c_long(LineOffset),
                                    ct.c_long(LineLoad))
-
-        if dataFormat not in ['Python', 'C']:
-            raise ValueError('dataFormat must be one of "Python" or "C"')
 
         imgData = self._cast_imgData(imgData)
         pImageData = imgData.ctypes.data_as(ct.c_void_p)
