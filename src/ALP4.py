@@ -474,14 +474,27 @@ class ALP4(object):
         self._lastDDRseq = SequenceId
         return SequenceId
 
-    def _cast_imgData(self, imgData):
-        if isinstance(imgData, np.ndarray):
-            if imgData.dtype == np.bool:
-                imgData = np.left_shift(imgData.astype(np.uint8), 7)
-            else:
-                imgData = imgData.astype(np.uint8)
-        else:
+    def _cast_imgData(self, imgData, SequenceId):
+        if not isinstance(imgData, np.ndarray):
             raise ValueError("imgData must be an numpy ndarray.")
+
+        bitplanes = self.SeqInquire(ALP_BITPLANES, SequenceId)
+        data_format = self.SeqInquire(ALP_DATA_FORMAT, SequenceId)
+
+        if data_format != ALP_DEFAULT and data_format != ALP_DATA_LSB_ALIGN:
+            raise NotImplementedError("Unsupported ALP_DATA_FORMAT.")
+
+        if 1<= bitplanes <= 8:
+            imgData = imgData.astype(np.uint8)
+            if bitplanes < 8 and data_format == ALP_DATA_MSB_ALIGN:
+                imgData = np.left_shift(imgData, 8 - bitplanes)
+        elif 9<= bitplanes <=16:
+            imgData = imgData.astype(np.uint16)
+            if bitplanes < 16 and data_format == ALP_DATA_MSB_ALIGN:
+                imgData = np.left_shift(imgData, 16 - bitplanes)
+        else:
+            raise AssertionError
+
 
         return imgData
 
@@ -543,7 +556,7 @@ class ALP4(object):
                                    ct.c_long(LineOffset),
                                    ct.c_long(LineLoad))
 
-        imgData = self._cast_imgData(imgData)
+        imgData = self._cast_imgData(imgData, SequenceId)
         pImageData = imgData.ctypes.data_as(ct.c_void_p)
 
         self._checkError(self._ALPLib.AlpSeqPutEx(self.ALP_ID, SequenceId, LinePutParam, pImageData),
@@ -593,7 +606,7 @@ class ALP4(object):
         if not SequenceId:
             SequenceId = self._lastDDRseq
 
-        imgData = self._cast_imgData(imgData)
+        imgData = self._cast_imgData(imgData, SequenceId)
 
         pImageData = imgData.ctypes.data_as(ct.c_void_p)
 
