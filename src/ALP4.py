@@ -737,7 +737,7 @@ class ALP4(object):
         ret = ct.c_double(0)
 
         self._checkError(self._ALPLib.AlpDevInquire(self.ALP_ID, inquireType, ct.byref(ret)), 'Error sending request.')
-        return ret.value()
+        return ret.value
 
     def SeqInquire(self, inquireType, SequenceId=None):
         """
@@ -1014,7 +1014,7 @@ class ALP4(object):
         if (SequenceId is None) and (self._lastDDRseq):
             SequenceId = self._lastDDRseq
         if (SequenceId is None):
-            self._raiseError('No sequence to display.')
+            raise ValueError('No sequence to display.')
 
         if loop:
             self._checkError(self._ALPLib.AlpProjStartCont(self.ALP_ID, SequenceId), 'Cannot launch sequence.')
