@@ -371,6 +371,8 @@ class ALP4(object):
             libPath += 'alpD41.dll'
         elif version == '4.3':
             libPath += 'alp4395.dll'
+        else:
+            raise ValueError("Unavailable ALPlib version. Currently supported version: 4.1, 4.2, 4.3")
 
         if self.verbose:
             print('Loading library: ' + libPath)
@@ -484,11 +486,11 @@ class ALP4(object):
         if data_format != ALP_DEFAULT and data_format != ALP_DATA_LSB_ALIGN:
             raise NotImplementedError("Unsupported ALP_DATA_FORMAT.")
 
-        if 1<= bitplanes <= 8:
+        if 1 <= bitplanes <= 8:
             imgData = imgData.astype(np.uint8)
             if bitplanes < 8 and data_format == ALP_DATA_MSB_ALIGN:
                 imgData = np.left_shift(imgData, 8 - bitplanes)
-        elif 9<= bitplanes <=16:
+        elif 9 <= bitplanes <= 16:
             imgData = imgData.astype(np.uint16)
             if bitplanes < 16 and data_format == ALP_DATA_MSB_ALIGN:
                 imgData = np.left_shift(imgData, 16 - bitplanes)
