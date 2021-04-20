@@ -654,8 +654,8 @@ class ALP4(object):
             bitPlane[(ind - ind % 8) // 8] += (2 ** (7 - ind % 8)) * ((int(value) >> bitShift) % 2)
         return bitPlane
 
-    def SetTiming(self, SequenceId=None, illuminationTime=None, pictureTime=None, synchDelay=None,
-                  synchPulseWidth=None, triggerInDelay=None):
+    def SetTiming(self, SequenceId=None, illuminationTime=ALP_DEFAULT, pictureTime=ALP_DEFAULT, synchDelay=ALP_DEFAULT,
+                  synchPulseWidth=ALP_DEFAULT, triggerInDelay=ALP_DEFAULT):
         """
         Set the timing properties of the sequence to display.
 
@@ -693,17 +693,6 @@ class ALP4(object):
             SequenceId = self._lastDDRseq
         if (SequenceId is None):
             raise ValueError('No sequence to display.')
-
-        if (synchDelay is None):
-            synchDelay = ALP_DEFAULT
-        if (synchPulseWidth is None):
-            synchPulseWidth = ALP_DEFAULT
-        if (triggerInDelay is None):
-            triggerInDelay = ALP_DEFAULT
-        if (illuminationTime is None):
-            illuminationTime = ALP_DEFAULT
-        if (pictureTime is None):
-            pictureTime = ALP_DEFAULT
 
         self._checkError(
             self._ALPLib.AlpSeqTiming(self.ALP_ID, SequenceId, ct.c_long(illuminationTime), ct.c_long(pictureTime),
